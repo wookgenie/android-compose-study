@@ -1,4 +1,4 @@
-package com.wookgenie.android.composestudy.ui.theme
+package com.wookgenie.android.composestudy.core.ui.theme
 
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily

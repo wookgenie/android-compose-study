@@ -34,14 +34,14 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.wookgenie.android.composestudy.ui.theme.Pretendard
-import com.wookgenie.android.composestudy.ui.theme.color_2B2B2B
-import com.wookgenie.android.composestudy.ui.theme.color_489A7C
-import com.wookgenie.android.composestudy.ui.theme.color_548DDE
-import com.wookgenie.android.composestudy.ui.theme.color_7E7E7E
-import com.wookgenie.android.composestudy.ui.theme.color_9E9E9E
-import com.wookgenie.android.composestudy.ui.theme.color_ECECEC
-import com.wookgenie.android.composestudy.ui.theme.color_F5F8FF
+import com.wookgenie.android.composestudy.core.ui.theme.Pretendard
+import com.wookgenie.android.composestudy.core.ui.theme.color_2B2B2B
+import com.wookgenie.android.composestudy.core.ui.theme.color_489A7C
+import com.wookgenie.android.composestudy.core.ui.theme.color_548DDE
+import com.wookgenie.android.composestudy.core.ui.theme.color_7E7E7E
+import com.wookgenie.android.composestudy.core.ui.theme.color_9E9E9E
+import com.wookgenie.android.composestudy.core.ui.theme.color_ECECEC
+import com.wookgenie.android.composestudy.core.ui.theme.color_F5F8FF
 
 enum class RcptGb { G0, G1 }
 
@@ -278,7 +278,7 @@ fun EmptyReceiptsView(
 @Preview(showBackground = true)
 @Composable
 private fun ReceiptListScreenPreview_Data() {
-    val mock = remember { createMockReceiptGroups23() }
+    val mock = remember { createMockReceiptGroups() }
 
     MaterialTheme {
         ReceiptListScreen(
@@ -300,8 +300,7 @@ private fun ReceiptListScreenPreview_Empty() {
     }
 }
 
-
-fun createMockReceiptGroups23(): List<ReceiptDateGroupUi> {
+fun createMockReceiptGroups(): List<ReceiptDateGroupUi> {
     var index = 0
 
     fun item(
