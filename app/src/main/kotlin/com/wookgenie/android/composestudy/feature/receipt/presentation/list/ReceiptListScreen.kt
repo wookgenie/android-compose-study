@@ -16,12 +16,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,7 +30,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wookgenie.android.composestudy.core.ui.theme.Pretendard
@@ -64,26 +62,62 @@ data class ReceiptDateGroupUi(
 
 @Composable
 fun ReceiptListScreen(
-    groups: List<ReceiptDateGroupUi>,
-//    onAddClick: () -> Unit,
+    state: ReceiptListContract.State,
+    onIntent: (ReceiptListContract.Intent) -> Unit,
     modifier: Modifier = Modifier,
     onItemClick: (ReceiptItemUi) -> Unit = {}
 ) {
     Box(modifier = modifier.fillMaxSize()) {
-        if (groups.isEmpty()) {
-            EmptyReceiptsView(
-                text = "내역이 없습니다",
-                modifier = Modifier.fillMaxSize()
-            )
-        } else {
-            ReceiptGroupedList(
-                groups = groups,
-                onItemClick = onItemClick,
-                modifier = Modifier.fillMaxSize()
 
-            )
+        // Content 영역: 에러 / 빈값 / 리스트
+        when {
+            state.errorMessage != null -> {
+                ErrorView(
+                    message = state.errorMessage,
+                    onRetry = { onIntent(ReceiptListContract.Intent.Retry) },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
+            state.groups.isEmpty() -> {
+                EmptyReceiptsView(
+                    text = "내역이 없습니다",
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+
+            else -> {
+                ReceiptGroupedList(
+                    groups = state.groups,
+                    onItemClick = { item ->
+                        onItemClick(item)
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+
+        // 로딩 오버레이 (API 붙일 때 자연스럽게 동작)
+        if (state.isLoading) {
+            LoadingOverlay(modifier = Modifier.fillMaxSize())
         }
     }
+
+//    Box(modifier = modifier.fillMaxSize()) {
+//        if (groups.isEmpty()) {
+//            EmptyReceiptsView(
+//                text = "내역이 없습니다",
+//                modifier = Modifier.fillMaxSize()
+//            )
+//        } else {
+//            ReceiptGroupedList(
+//                groups = groups,
+//                onItemClick = onItemClick,
+//                modifier = Modifier.fillMaxSize()
+//
+//            )
+//        }
+//    }
 }
 
 @Composable
@@ -123,6 +157,73 @@ fun ReceiptGroupedList(
         }
     }
 }
+
+@Composable
+fun ErrorView(
+    message: String,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "불러오기 실패",
+                style = TextStyle(
+                    fontFamily = Pretendard,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 16.sp,
+                    color = color_2B2B2B
+                )
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            Text(
+                text = message,
+                style = TextStyle(
+                    fontFamily = Pretendard,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 13.sp,
+                    color = color_9E9E9E
+                )
+            )
+
+            Spacer(Modifier.height(12.dp))
+
+            Text(
+                text = "다시 시도",
+                style = TextStyle(
+                    fontFamily = Pretendard,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
+                    color = color_548DDE
+                ),
+                modifier = Modifier
+                    .clickable(onClick = onRetry)
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun LoadingOverlay(
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .background(Color.Black.copy(alpha = 0.08f)),
+        contentAlignment = Alignment.Center,
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
 
 @Composable
 fun DateHeader(
@@ -273,106 +374,4 @@ fun EmptyReceiptsView(
             )
         )
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun ReceiptListScreenPreview_Data() {
-    val mock = remember { createMockReceiptGroups() }
-
-    MaterialTheme {
-        ReceiptListScreen(
-            groups = mock,
-//            onAddClick = {}
-        )
-    }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-private fun ReceiptListScreenPreview_Empty() {
-    MaterialTheme {
-        ReceiptListScreen(
-            groups = emptyList(),
-//            onAddClick = {}
-        )
-    }
-}
-
-fun createMockReceiptGroups(): List<ReceiptDateGroupUi> {
-    var index = 0
-
-    fun item(
-        name: String,
-        amount: String,
-        use: String,
-        badge: String,
-        gb: RcptGb,
-        approved: Boolean
-    ) = ReceiptItemUi(
-        id = "item-${index++}",
-        bzaqNm = name,
-        trscAmtText = amount,
-        useUsagNm = use,
-        badgeText = badge,
-        rcptGb = gb,
-        isApproved = approved
-    )
-
-    return listOf(
-        ReceiptDateGroupUi(
-            dateKey = "20251017",
-            headerText = "10월 17일 금요일",
-            items = listOf(
-                item("테스트 결제", "1원", "개인경비", "간이영수증", RcptGb.G0, true),
-                item("스타벅스 강남점", "12,000원", "", "국민카드 1234", RcptGb.G1, false),
-                item("맥도날드", "8,500원", "식비", "국민카드 5678", RcptGb.G1, false),
-                item("편의점", "3,200원", "", "간이영수증", RcptGb.G0, false),
-                item("카카오택시", "14,300원", "교통비", "국민카드 1234", RcptGb.G1, true)
-            )
-        ),
-        ReceiptDateGroupUi(
-            dateKey = "20251016",
-            headerText = "10월 16일 목요일",
-            items = listOf(
-                item("서점", "18,000원", "도서비", "국민카드 9876", RcptGb.G1, false),
-                item("식당", "9,000원", "", "간이영수증", RcptGb.G0, false),
-                item("주유소", "52,000원", "교통비", "국민카드 9876", RcptGb.G1, true),
-                item("커피빈", "6,500원", "", "국민카드 1234", RcptGb.G1, false),
-                item("베이커리", "7,800원", "식비", "간이영수증", RcptGb.G0, false)
-            )
-        ),
-        ReceiptDateGroupUi(
-            dateKey = "20251015",
-            headerText = "10월 15일 수요일",
-            items = listOf(
-                item("택시", "11,200원", "교통비", "국민카드 5678", RcptGb.G1, true),
-                item("식당", "10,000원", "", "간이영수증", RcptGb.G0, false),
-                item("편의점", "2,900원", "개인경비", "국민카드 1234", RcptGb.G1, false),
-                item("문구점", "4,500원", "", "간이영수증", RcptGb.G0, false)
-            )
-        ),
-        ReceiptDateGroupUi(
-            dateKey = "20251014",
-            headerText = "10월 14일 화요일",
-            items = listOf(
-                item("패스트푸드", "7,300원", "식비", "국민카드 9876", RcptGb.G1, false),
-                item("커피숍", "5,500원", "", "간이영수증", RcptGb.G0, false),
-                item("약국", "12,400원", "의료비", "국민카드 1234", RcptGb.G1, true),
-                item("마트", "26,800원", "", "국민카드 9876", RcptGb.G1, false)
-            )
-        ),
-        ReceiptDateGroupUi(
-            dateKey = "20251013",
-            headerText = "10월 13일 월요일",
-            items = listOf(
-                item("서점", "22,000원", "도서비", "국민카드 5678", RcptGb.G1, false),
-                item("식당", "8,000원", "", "간이영수증", RcptGb.G0, false),
-                item("카페", "4,800원", "", "국민카드 1234", RcptGb.G1, false),
-                item("택시", "15,600원", "교통비", "국민카드 5678", RcptGb.G1, true),
-                item("편의점", "3,100원", "", "간이영수증", RcptGb.G0, false)
-            )
-        )
-    )
 }
