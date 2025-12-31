@@ -102,22 +102,6 @@ fun ReceiptListScreen(
             LoadingOverlay(modifier = Modifier.fillMaxSize())
         }
     }
-
-//    Box(modifier = modifier.fillMaxSize()) {
-//        if (groups.isEmpty()) {
-//            EmptyReceiptsView(
-//                text = "내역이 없습니다",
-//                modifier = Modifier.fillMaxSize()
-//            )
-//        } else {
-//            ReceiptGroupedList(
-//                groups = groups,
-//                onItemClick = onItemClick,
-//                modifier = Modifier.fillMaxSize()
-//
-//            )
-//        }
-//    }
 }
 
 @Composable
