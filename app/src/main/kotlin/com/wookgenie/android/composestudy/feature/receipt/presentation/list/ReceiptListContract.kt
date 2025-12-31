@@ -17,5 +17,6 @@ object ReceiptListContract {
 
     sealed interface SideEffect {
         data class ShowMessage(val message: String) : SideEffect
+        data class ShowRetry(val message: String) : SideEffect
     }
 }

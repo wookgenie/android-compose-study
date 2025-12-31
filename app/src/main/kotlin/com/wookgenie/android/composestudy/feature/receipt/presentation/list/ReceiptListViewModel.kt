@@ -1,61 +1,47 @@
 package com.wookgenie.android.composestudy.feature.receipt.presentation.list
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.wookgenie.android.composestudy.feature.receipt.domain.repository.ReceiptRepository
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.launch
+import org.orbitmvi.orbit.ContainerHost
+import org.orbitmvi.orbit.viewmodel.container
 
 class ReceiptListViewModel(
     private val repository: ReceiptRepository
-) : ViewModel() {
+) : ViewModel(), ContainerHost<ReceiptListContract.State, ReceiptListContract.SideEffect> {
 
-    var state by mutableStateOf(ReceiptListContract.State())
-        private set
+    override val container = container<ReceiptListContract.State, ReceiptListContract.SideEffect>(
+        initialState = ReceiptListContract.State()
+    )
 
-    private val _sideEffect = MutableSharedFlow<ReceiptListContract.SideEffect>()
-    val sideEffect: SharedFlow<ReceiptListContract.SideEffect> = _sideEffect
-
-    fun dispatch(intent: ReceiptListContract.Intent) {
-        when (intent) {
-            is ReceiptListContract.Intent.Enter -> {
-                load()
-            }
-
-            is ReceiptListContract.Intent.Refresh -> {
-                load()
-            }
-
-            is ReceiptListContract.Intent.Retry -> {
-                load()
-            }
-
-            is ReceiptListContract.Intent.ClickItem -> {
+    fun onIntent(intent: ReceiptListContract.Intent) = when (intent) {
+        ReceiptListContract.Intent.Enter -> load()
+        ReceiptListContract.Intent.Retry -> load()
+        ReceiptListContract.Intent.Refresh -> load()
+        is ReceiptListContract.Intent.ClickItem -> {
+            // 필요 시 SideEffect로 처리
+            intent {
+                postSideEffect(
+                    ReceiptListContract.SideEffect.ShowMessage(intent.item.bzaqNm)
+                )
             }
         }
     }
 
-    private fun load() {
-        state = state.copy(isLoading = true, errorMessage = null)
+    private fun load() = intent {
+        reduce { state.copy(isLoading = true, errorMessage = null) }
 
-        runCatching {
-            repository.getReceiptGroups()
-        }.onSuccess { groups ->
-            state = state.copy(isLoading = false, groups = groups)
-        }.onFailure { t ->
-            state = state.copy(
-                isLoading = false,
-                errorMessage = t.message ?: "불러오기 실패"
-            )
-            viewModelScope.launch {
-                _sideEffect.emit(
-                    ReceiptListContract.SideEffect.ShowMessage("불러오기 실패")
-                )
+        runCatching { repository.getReceiptGroups() }
+            .onSuccess { groups ->
+                reduce { state.copy(isLoading = false, groups = groups) }
             }
-        }
+            .onFailure { t ->
+                reduce {
+                    state.copy(
+                        isLoading = false,
+                        errorMessage = t.message ?: "불러오기 실패"
+                    )
+                }
+                postSideEffect(ReceiptListContract.SideEffect.ShowMessage("불러오기 실패"))
+            }
     }
 }
